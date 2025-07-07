@@ -142,6 +142,113 @@ public class RNForegroundServiceModuleEnhanced extends ReactContextBaseJavaModul
         }
     }
 
+    @ReactMethod
+    public void updateService(ReadableMap options, Promise promise) {
+        try {
+            Intent serviceIntent = new Intent(reactContext, ForegroundServiceEnhanced.class);
+            serviceIntent.setAction("UPDATE_NOTIFICATION");
+            
+            // Copy options for update
+            copyOptionsToIntent(options, serviceIntent);
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                reactContext.startForegroundService(serviceIntent);
+            } else {
+                reactContext.startService(serviceIntent);
+            }
+            
+            promise.resolve(null);
+        } catch (Exception e) {
+            WritableMap errorData = Arguments.createMap();
+            errorData.putString("error", e.getMessage());
+            sendEvent("onServiceError", errorData);
+            promise.reject("UPDATE_SERVICE_ERROR", e.getMessage());
+        }
+    }
+
+    @ReactMethod
+    public void stopService(Promise promise) {
+        try {
+            Intent serviceIntent = new Intent(reactContext, ForegroundServiceEnhanced.class);
+            reactContext.stopService(serviceIntent);
+            
+            WritableMap eventData = Arguments.createMap();
+            eventData.putString("status", "stopped");
+            sendEvent("onServiceStop", eventData);
+            
+            promise.resolve(null);
+        } catch (Exception e) {
+            promise.reject("STOP_SERVICE_ERROR", e.getMessage());
+        }
+    }
+
+    @ReactMethod
+    public void isServiceRunning(Promise promise) {
+        try {
+            boolean running = isServiceRunning();
+            promise.resolve(running);
+        } catch (Exception e) {
+            promise.reject("CHECK_SERVICE_ERROR", e.getMessage());
+        }
+    }
+
+    @ReactMethod
+    public void getServiceMetrics(Promise promise) {
+        try {
+            if (isServiceRunning()) {
+                // In a real implementation, you would get metrics from the service
+                // For now, return basic metrics
+                WritableMap metrics = Arguments.createMap();
+                metrics.putDouble("uptime", System.currentTimeMillis());
+                metrics.putInt("tasksExecuted", 0);
+                metrics.putInt("tasksSucceeded", 0);
+                metrics.putInt("tasksFailed", 0);
+                metrics.putDouble("memoryUsage", 0);
+                metrics.putString("batteryImpact", "low");
+                promise.resolve(metrics);
+            } else {
+                promise.reject("SERVICE_NOT_RUNNING", "Service is not currently running");
+            }
+        } catch (Exception e) {
+            promise.reject("GET_METRICS_ERROR", e.getMessage());
+        }
+    }
+
+    @ReactMethod
+    public void checkPermission(Promise promise) {
+        try {
+            boolean hasAllPermissions = hasAllRequiredPermissions();
+            promise.resolve(hasAllPermissions);
+        } catch (Exception e) {
+            promise.reject("CHECK_PERMISSION_ERROR", e.getMessage());
+        }
+    }
+
+    @ReactMethod
+    public void checkNotificationPermission(Promise promise) {
+        try {
+            boolean hasPermission = NotificationManagerCompat.from(reactContext).areNotificationsEnabled();
+            promise.resolve(hasPermission);
+        } catch (Exception e) {
+            promise.reject("CHECK_NOTIFICATION_PERMISSION_ERROR", e.getMessage());
+        }
+    }
+
+    @ReactMethod
+    public void checkBatteryOptimization(Promise promise) {
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                android.os.PowerManager pm = (android.os.PowerManager) reactContext.getSystemService(Context.POWER_SERVICE);
+                boolean isIgnoringOptimization = pm.isIgnoringBatteryOptimizations(reactContext.getPackageName());
+                promise.resolve(isIgnoringOptimization);
+            } else {
+                promise.resolve(true); // No battery optimization on older versions
+            }
+        } catch (Exception e) {
+            promise.reject("CHECK_BATTERY_OPTIMIZATION_ERROR", e.getMessage());
+        }
+    }
+
     private boolean hasAllRequiredPermissions() {
         String[] permissions = Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE 
             ? REQUIRED_PERMISSIONS_API_34 
@@ -158,7 +265,7 @@ public class RNForegroundServiceModuleEnhanced extends ReactContextBaseJavaModul
     }
 
     private void copyOptionsToIntent(ReadableMap options, Intent intent) {
-        // Copy all options with proper validation
+        // Basic notification options
         if (options.hasKey("taskName")) {
             intent.putExtra("taskName", options.getString("taskName"));
         }
@@ -168,6 +275,86 @@ public class RNForegroundServiceModuleEnhanced extends ReactContextBaseJavaModul
         if (options.hasKey("taskDesc")) {
             intent.putExtra("taskDesc", options.getString("taskDesc"));
         }
+        if (options.hasKey("taskIcon")) {
+            intent.putExtra("taskIcon", options.getString("taskIcon"));
+        }
+        if (options.hasKey("importance")) {
+            intent.putExtra("importance", options.getString("importance"));
+        }
+        if (options.hasKey("number")) {
+            intent.putExtra("number", options.getInt("number"));
+        }
+        if (options.hasKey("setOnlyAlertOnce")) {
+            intent.putExtra("setOnlyAlertOnce", options.getBoolean("setOnlyAlertOnce"));
+        }
+        if (options.hasKey("color")) {
+            intent.putExtra("color", options.getString("color"));
+        }
+        
+        // Progress options
+        if (options.hasKey("progress")) {
+            ReadableMap progress = options.getMap("progress");
+            if (progress != null) {
+                intent.putExtra("progressMax", progress.getInt("max"));
+                intent.putExtra("progressCurr", progress.getInt("curr"));
+                if (progress.hasKey("indeterminate")) {
+                    intent.putExtra("progressIndeterminate", progress.getBoolean("indeterminate"));
+                }
+            }
+        }
+        
+        // Enhanced notification options
+        if (options.hasKey("vibration")) {
+            intent.putExtra("vibration", options.getBoolean("vibration"));
+        }
+        if (options.hasKey("sound")) {
+            intent.putExtra("sound", options.getString("sound"));
+        }
+        if (options.hasKey("channel")) {
+            intent.putExtra("channel", options.getString("channel"));
+        }
+        if (options.hasKey("category")) {
+            intent.putExtra("category", options.getString("category"));
+        }
+        if (options.hasKey("visibility")) {
+            intent.putExtra("visibility", options.getString("visibility"));
+        }
+        if (options.hasKey("largeIcon")) {
+            intent.putExtra("largeIcon", options.getString("largeIcon"));
+        }
+        
+        // Multiple button support
+        if (options.hasKey("button")) {
+            intent.putExtra("button", options.getBoolean("button"));
+            if (options.hasKey("buttonText")) {
+                intent.putExtra("buttonText", options.getString("buttonText"));
+            }
+            if (options.hasKey("buttonOnPress")) {
+                intent.putExtra("buttonOnPress", options.getString("buttonOnPress"));
+            }
+        }
+        
+        if (options.hasKey("button2")) {
+            intent.putExtra("button2", options.getBoolean("button2"));
+            if (options.hasKey("button2Text")) {
+                intent.putExtra("button2Text", options.getString("button2Text"));
+            }
+            if (options.hasKey("button2OnPress")) {
+                intent.putExtra("button2OnPress", options.getString("button2OnPress"));
+            }
+        }
+        
+        if (options.hasKey("button3")) {
+            intent.putExtra("button3", options.getBoolean("button3"));
+            if (options.hasKey("button3Text")) {
+                intent.putExtra("button3Text", options.getString("button3Text"));
+            }
+            if (options.hasKey("button3OnPress")) {
+                intent.putExtra("button3OnPress", options.getString("button3OnPress"));
+            }
+        }
+        
+        // Service configuration
         if (options.hasKey("serviceType")) {
             intent.putExtra("serviceType", options.getString("serviceType"));
         }
@@ -177,7 +364,6 @@ public class RNForegroundServiceModuleEnhanced extends ReactContextBaseJavaModul
         if (options.hasKey("autoStop")) {
             intent.putExtra("autoStop", options.getBoolean("autoStop"));
         }
-        // Add other options...
     }
 
     private boolean isServiceRunning() {
