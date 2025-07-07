@@ -1,0 +1,13 @@
+{
+  "extends": "./tsconfig",
+  "compilerOptions": {
+    "outDir": "lib/typescript",
+    "declaration": true,
+    "emitDeclarationOnly": true
+  },
+  "exclude": [
+    "**/__tests__/**",
+    "**/__fixtures__/**",
+    "**/__mocks__/**"
+  ]
+}
