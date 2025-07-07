@@ -88,7 +88,16 @@
     "modulePathIgnorePatterns": [
       "<rootDir>/example/node_modules",
       "<rootDir>/lib/"
-    ]
+    ],
+    "collectCoverageFrom": [
+      "src/**/*.{ts,tsx}",
+      "!src/**/*.d.ts",
+      "!src/**/index.ts"
+    ],
+    "coverageDirectory": "coverage",
+    "coverageReporters": ["text", "lcov", "html"],
+    "setupFilesAfterEnv": ["<rootDir>/jest.setup.js"],
+    "testEnvironment": "node"
   },
   "react-native-builder-bob": {
     "source": "src",
