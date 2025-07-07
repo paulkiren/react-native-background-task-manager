@@ -1,7 +1,7 @@
 {
-  "name": "react-native-foreground-service",
+  "name": "react-native-background-task-manager",
   "version": "1.0.0",
-  "description": "A React Native library for running foreground services on Android",
+  "description": "Advanced React Native background task manager with foreground services, scheduling, and geolocation support for Android",
   "main": "lib/commonjs/index",
   "module": "lib/module/index",
   "types": "lib/typescript/index.d.ts",
@@ -11,7 +11,7 @@
     "src",
     "lib",
     "android",
-    "react-native-foreground-service.podspec",
+    "react-native-background-task-manager.podspec",
     "!lib/typescript/example",
     "!android/build",
     "!android/gradle",
@@ -41,19 +41,28 @@
   },
   "keywords": [
     "react-native",
-    "ios",
     "android",
     "foreground-service",
     "background-service",
-    "notification"
+    "notification",
+    "geolocation",
+    "location-tracking",
+    "background-tasks",
+    "task-scheduler",
+    "android-service",
+    "persistent-notification",
+    "background-processing"
   ],
-  "repository": "https://github.com/yourusername/react-native-foreground-service",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/paulkiren/react-native-background-task-manager.git"
+  },
   "author": "Your Name <your.email@example.com> (https://github.com/yourusername)",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/yourusername/react-native-foreground-service/issues"
+    "url": "https://github.com/paulkiren/react-native-background-task-manager/issues"
   },
-  "homepage": "https://github.com/yourusername/react-native-foreground-service#readme",
+  "homepage": "https://github.com/paulkiren/react-native-background-task-manager#readme",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/"
   },

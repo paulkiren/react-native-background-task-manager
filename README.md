@@ -1,23 +1,35 @@
-# React Native Foreground Service
+# React Native Background Task Manager
 
-A React Native library for running foreground services on Android. This library allows your app to run tasks in the background while displaying a persistent notification to the user.
+A powerful React Native library for managing background tasks on Android with foreground services, advanced scheduling, and geolocation support. Perfect for apps that need reliable background processing with persistent notifications.
 
-## Features
+## 🚀 Features
 
-- ✅ Start and stop foreground services
-- ✅ Update notification content and progress
-- ✅ Customizable notifications with progress bars
-- ✅ Action buttons in notifications
-- ✅ Permission management
-- ✅ TypeScript support
-- ✅ Android 14+ compatible
+- ✅ **Background Task Management**: Advanced task scheduling with priorities and error handling
+- ✅ **Foreground Services**: Reliable foreground service management for Android
+- ✅ **Progress Tracking**: Real-time progress updates in notifications
+- ✅ **Notification Actions**: Interactive buttons for user control
+- ✅ **Geolocation Ready**: Perfect companion for location tracking apps
+- ✅ **Permission Management**: Comprehensive permission handling
+- ✅ **Battery Optimization**: Built-in battery optimization management
+- ✅ **TypeScript Support**: Full TypeScript definitions
+- ✅ **Android 14+ Compatible**: Supports latest Android requirements
 
-## Installation
+## 📦 Installation
 
 ```bash
-npm install react-native-foreground-service
+npm install react-native-background-task-manager
 # or
-yarn add react-native-foreground-service
+yarn add react-native-background-task-manager
+```
+
+### React Native >= 0.60 (Auto-linking)
+
+No additional steps required. The library will be linked automatically.
+
+### React Native < 0.60 (Manual linking)
+
+```bash
+react-native link react-native-background-task-manager
 ```
 
 ### Android Setup
@@ -59,47 +71,47 @@ protected List<ReactPackage> getReactPackages() {
 ### Basic Usage
 
 ```typescript
-import ForegroundService from 'react-native-foreground-service';
+import BackgroundTaskManager from 'react-native-background-task-manager';
 
-// Start a foreground service
+// Start a background task with foreground service
 const startService = async () => {
   try {
-    await ForegroundService.startService({
+    await BackgroundTaskManager.startService({
       taskName: 'MyBackgroundTask',
       taskTitle: 'Background Processing',
       taskDesc: 'Processing data in the background...',
     });
-    console.log('Service started successfully');
+    console.log('Background task started successfully');
   } catch (error) {
-    console.error('Failed to start service:', error);
+    console.error('Failed to start background task:', error);
   }
 };
 
 // Stop the service
 const stopService = async () => {
   try {
-    await ForegroundService.stopService();
-    console.log('Service stopped successfully');
+    await BackgroundTaskManager.stopService();
+    console.log('Background task stopped successfully');
   } catch (error) {
-    console.error('Failed to stop service:', error);
+    console.error('Failed to stop background task:', error);
   }
 };
 
 // Check if service is running
 const checkService = async () => {
-  const isRunning = await ForegroundService.isServiceRunning();
-  console.log('Service is running:', isRunning);
+  const isRunning = await BackgroundTaskManager.isServiceRunning();
+  console.log('Background task is running:', isRunning);
 };
 ```
 
 ### Advanced Usage with Progress
 
 ```typescript
-import ForegroundService from 'react-native-foreground-service';
+import BackgroundTaskManager from 'react-native-background-task-manager';
 
 const processWithProgress = async () => {
-  // Start service with progress bar
-  await ForegroundService.startService({
+  // Start background task with progress bar
+  await BackgroundTaskManager.startService({
     taskName: 'DataProcessing',
     taskTitle: 'Processing Files',
     taskDesc: 'Processing 0/100 files...',
@@ -116,7 +128,7 @@ const processWithProgress = async () => {
     await new Promise(resolve => setTimeout(resolve, 100)); // Simulate work
     
     // Update progress
-    await ForegroundService.updateService({
+    await BackgroundTaskManager.updateService({
       taskTitle: 'Processing Files',
       taskDesc: `Processing ${i}/100 files...`,
       progress: {
@@ -128,14 +140,14 @@ const processWithProgress = async () => {
   }
 
   // Complete and stop service
-  await ForegroundService.stopService();
+  await BackgroundTaskManager.stopService();
 };
 ```
 
 ### With Action Button
 
 ```typescript
-await ForegroundService.startService({
+await BackgroundTaskManager.startService({
   taskName: 'DownloadTask',
   taskTitle: 'Downloading Files',
   taskDesc: 'Download in progress...',
@@ -148,9 +160,9 @@ await ForegroundService.startService({
 
 ## API Reference
 
-### `startService(options: ForegroundServiceOptions): Promise<void>`
+### `startService(options: BackgroundTaskOptions): Promise<void>`
 
-Starts the foreground service with the specified options.
+Starts a background task with foreground service and the specified options.
 
 #### Options
 
@@ -179,15 +191,15 @@ Starts the foreground service with the specified options.
 
 ### `stopService(): Promise<void>`
 
-Stops the currently running foreground service.
+Stops the currently running background task and foreground service.
 
-### `updateService(options: Partial<ForegroundServiceOptions>): Promise<void>`
+### `updateService(options: Partial<BackgroundTaskOptions>): Promise<void>`
 
-Updates the notification content of the running service.
+Updates the notification content of the running background task.
 
 ### `isServiceRunning(): Promise<boolean>`
 
-Checks if the foreground service is currently running.
+Checks if the background task with foreground service is currently running.
 
 ### `checkPermission(): Promise<boolean>`
 
@@ -204,9 +216,9 @@ Here's a complete example component:
 ```typescript
 import React, { useState, useEffect } from 'react';
 import { View, Text, Button, StyleSheet } from 'react-native';
-import ForegroundService from 'react-native-foreground-service';
+import BackgroundTaskManager from 'react-native-background-task-manager';
 
-const ForegroundServiceExample = () => {
+const BackgroundTaskExample = () => {
   const [isRunning, setIsRunning] = useState(false);
   const [progress, setProgress] = useState(0);
 
@@ -215,12 +227,12 @@ const ForegroundServiceExample = () => {
   }, []);
 
   const checkServiceStatus = async () => {
-    const running = await ForegroundService.isServiceRunning();
+    const running = await BackgroundTaskManager.isServiceRunning();
     setIsRunning(running);
   };
 
   const startDownload = async () => {
-    await ForegroundService.startService({
+    await BackgroundTaskManager.startService({
       taskName: 'FileDownload',
       taskTitle: 'Downloading Files',
       taskDesc: 'Starting download...',
@@ -244,7 +256,7 @@ const ForegroundServiceExample = () => {
       await new Promise(resolve => setTimeout(resolve, 50));
       setProgress(i);
       
-      await ForegroundService.updateService({
+      await BackgroundTaskManager.updateService({
         taskDesc: `Downloaded ${i}% of files`,
         progress: {
           max: 100,
@@ -254,21 +266,21 @@ const ForegroundServiceExample = () => {
       });
     }
 
-    await ForegroundService.stopService();
+    await BackgroundTaskManager.stopService();
     setIsRunning(false);
     setProgress(0);
   };
 
   const stopService = async () => {
-    await ForegroundService.stopService();
+    await BackgroundTaskManager.stopService();
     setIsRunning(false);
     setProgress(0);
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Foreground Service Example</Text>
-      <Text>Service Status: {isRunning ? 'Running' : 'Stopped'}</Text>
+      <Text style={styles.title}>Background Task Manager Example</Text>
+      <Text>Task Status: {isRunning ? 'Running' : 'Stopped'}</Text>
       <Text>Progress: {progress}%</Text>
       
       <View style={styles.buttonContainer}>
@@ -278,7 +290,7 @@ const ForegroundServiceExample = () => {
           disabled={isRunning}
         />
         <Button
-          title="Stop Service"
+          title="Stop Task"
           onPress={stopService}
           disabled={!isRunning}
         />
@@ -305,13 +317,13 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ForegroundServiceExample;
+export default BackgroundTaskExample;
 ```
 
 ## Platform Support
 
 - ✅ Android (API 21+)
-- ❌ iOS (Foreground services are not applicable on iOS)
+- ❌ iOS (Background task management with foreground services is Android-specific)
 
 ## Important Notes
 

@@ -209,4 +209,10 @@ export interface ForegroundServiceModule {
 }
 
 export { default } from './ForegroundService';
+export { default as BackgroundTaskManager } from './ForegroundService';
 export { TaskManager } from './TaskManager';
+
+// Type aliases for better naming
+export type BackgroundTaskOptions = ForegroundServiceOptions;
+export type BackgroundTaskEventListener = ForegroundServiceEventListener;
+export type BackgroundTaskModule = ForegroundServiceModule;
