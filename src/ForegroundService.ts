@@ -1,5 +1,5 @@
-import { NativeModules, Platform, PermissionsAndroid } from 'react-native';
-import type { ForegroundServiceOptions, ForegroundServiceModule } from './index';
+import { NativeModules, Platform, PermissionsAndroid, DeviceEventEmitter, NativeEventEmitter } from 'react-native';
+import type { ForegroundServiceOptions, ForegroundServiceModule, ForegroundServiceEventListener } from './index';
 
 const LINKING_ERROR =
   `The package 'react-native-foreground-service' doesn't seem to be linked. Make sure: \n\n` +
@@ -19,32 +19,32 @@ const RNForegroundService = NativeModules.RNForegroundService
     );
 
 class ForegroundServiceClass implements ForegroundServiceModule {
+  private eventEmitter: NativeEventEmitter | null = null;
+  private eventListener: ForegroundServiceEventListener | null = null;
+
+  constructor() {
+    if (Platform.OS === 'android' && RNForegroundService) {
+      this.eventEmitter = new NativeEventEmitter(RNForegroundService);
+    }
+  }
+
   /**
-   * Start the foreground service
+   * Start the foreground service with enhanced validation
    */
   async startService(options: ForegroundServiceOptions): Promise<void> {
     if (Platform.OS !== 'android') {
       console.warn('Foreground service is only supported on Android');
       return;
     }
-    
-    return RNForegroundService.startService(options);
-  }
 
-  /**
-   * Stop the foreground service
-   */
-  async stopService(): Promise<void> {
-    if (Platform.OS !== 'android') {
-      return;
+    // Validate required fields
+    if (!options.taskName || !options.taskTitle) {
+      throw new Error('taskName and taskTitle are required fields');
     }
-    
-    return RNForegroundService.stopService();
-  }
 
-  /**
-   * Update the foreground service notification
-   */
+    // Validate service type for Android 14+
+    if (Platform.Version >= 34 && !options.serviceType) {
+      throw
   async updateService(options: Partial<ForegroundServiceOptions>): Promise<void> {
     if (Platform.OS !== 'android') {
       return;

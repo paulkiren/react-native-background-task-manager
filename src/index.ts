@@ -10,12 +10,24 @@ export interface ForegroundServiceOptions {
   buttonOnPress?: string;
   setOnlyAlertOnce?: boolean;
   color?: string;
-  serviceType?: 'dataSync' | 'mediaProcessing' | 'location' | 'camera' | 'microphone';
+  serviceType?: 'dataSync' | 'mediaProcessing' | 'location' | 'camera' | 'microphone' | 'phoneCall' | 'mediaPlayback' | 'remoteMessaging';
   progress?: {
     max: number;
     curr: number;
     indeterminate?: boolean;
   };
+  // New Android 14+ fields
+  foregroundServiceType?: string;
+  autoStop?: boolean; // Auto-stop service after task completion
+  timeoutMs?: number; // Service timeout for safety
+}
+
+// New service event listener interface
+export interface ForegroundServiceEventListener {
+  onServiceStart?: () => void;
+  onServiceStop?: () => void;
+  onServiceError?: (error: string) => void;
+  onButtonPress?: (action: string) => void;
 }
 
 export interface ForegroundServiceModule {
@@ -58,6 +70,31 @@ export interface ForegroundServiceModule {
    * Check if app is exempted from battery optimization
    */
   checkBatteryOptimization(): Promise<boolean>;
+  
+  /**
+   * Register event listeners for service events
+   */
+  addEventListener(listener: ForegroundServiceEventListener): void;
+  
+  /**
+   * Remove event listeners
+   */
+  removeEventListener(): void;
+  
+  /**
+   * Get current service status with detailed information
+   */
+  getServiceStatus(): Promise<{
+    isRunning: boolean;
+    startTime?: number;
+    serviceType?: string;
+    notificationId?: number;
+  }>;
+  
+  /**
+   * Request battery optimization exemption (required for long-running services)
+   */
+  requestBatteryOptimizationExemption(): Promise<boolean>;
 }
 
-export { default } from '../ForegroundService';
+export { default } from './ForegroundService';
