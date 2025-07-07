@@ -1,4 +1,4 @@
-import { NativeModules, Platform } from 'react-native';
+import { NativeModules, Platform, PermissionsAndroid } from 'react-native';
 import type { ForegroundServiceOptions, ForegroundServiceModule } from './index';
 
 const LINKING_ERROR =
@@ -76,6 +76,28 @@ class ForegroundServiceClass implements ForegroundServiceModule {
   }
 
   /**
+   * Check notification permission specifically (Android 13+)
+   */
+  async checkNotificationPermission(): Promise<boolean> {
+    if (Platform.OS !== 'android') {
+      return true; // iOS doesn't need explicit permission check here
+    }
+    
+    return RNForegroundService.checkNotificationPermission();
+  }
+
+  /**
+   * Check if app is exempted from battery optimization
+   */
+  async checkBatteryOptimization(): Promise<boolean> {
+    if (Platform.OS !== 'android') {
+      return true; // iOS doesn't have battery optimization settings
+    }
+    
+    return RNForegroundService.checkBatteryOptimization();
+  }
+
+  /**
    * Request foreground service permission
    */
   async requestPermission(): Promise<boolean> {
@@ -84,6 +106,30 @@ class ForegroundServiceClass implements ForegroundServiceModule {
     }
     
     return RNForegroundService.requestPermission();
+  }
+
+  /**
+   * Request notification permission (Android 13+)
+   * Note: This should be called from React Native side using PermissionsAndroid
+   */
+  async requestNotificationPermission(): Promise<boolean> {
+    if (Platform.OS !== 'android') {
+      return true;
+    }
+    
+    if (Platform.Version >= 33) {
+      try {
+        const granted = await PermissionsAndroid.request(
+          'android.permission.POST_NOTIFICATIONS'
+        );
+        return granted === PermissionsAndroid.RESULTS.GRANTED;
+      } catch (error) {
+        console.error('Error requesting notification permission:', error);
+        return false;
+      }
+    }
+    
+    return true; // Permission not needed on older versions
   }
 }
 

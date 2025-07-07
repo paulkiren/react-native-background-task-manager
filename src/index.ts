@@ -10,6 +10,7 @@ export interface ForegroundServiceOptions {
   buttonOnPress?: string;
   setOnlyAlertOnce?: boolean;
   color?: string;
+  serviceType?: 'dataSync' | 'mediaProcessing' | 'location' | 'camera' | 'microphone';
   progress?: {
     max: number;
     curr: number;
@@ -39,7 +40,7 @@ export interface ForegroundServiceModule {
   isServiceRunning(): Promise<boolean>;
   
   /**
-   * Check if app has foreground service permission
+   * Check if app has all required permissions (foreground service + notifications)
    */
   checkPermission(): Promise<boolean>;
   
@@ -47,6 +48,16 @@ export interface ForegroundServiceModule {
    * Request foreground service permission
    */
   requestPermission(): Promise<boolean>;
+  
+  /**
+   * Check notification permission specifically (Android 13+)
+   */
+  checkNotificationPermission(): Promise<boolean>;
+  
+  /**
+   * Check if app is exempted from battery optimization
+   */
+  checkBatteryOptimization(): Promise<boolean>;
 }
 
-export { default } from './ForegroundService';
+export { default } from '../ForegroundService';

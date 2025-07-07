@@ -12,7 +12,19 @@ This is a complete React Native library that enables Android apps to run foregro
 - ✅ **Progress Tracking**: Real-time progress updates with determinate and indeterminate modes
 - ✅ **TypeScript Support**: Full TypeScript definitions included
 - ✅ **Easy Integration**: Simple API that works with existing React Native apps
-- ✅ **Android 14+ Compatible**: Supports latest Android requirements
+- ✅ **Android 14+ Compatible**: Supports latest Android requirements and targeting SDK 34
+- ✅ **React Native 0.75+ Compatible**: Works with latest React Native versions
+- ✅ **Runtime Permissions**: Handles Android 13+ notification permissions
+- ✅ **Battery Optimization**: Built-in battery optimization checks
+
+## 🆕 2025 Compatibility Updates
+
+- **Android 14+ Support**: Full compliance with Android 14 foreground service requirements
+- **React Native 0.75+**: Compatible with latest React Native architecture
+- **Runtime Permissions**: Automatic handling of Android 13+ notification permissions
+- **Service Types**: Proper foreground service type declarations
+- **Battery Optimization**: Built-in checks for battery optimization settings
+- **Policy Compliance**: Meets all current Google Play Store requirements
 
 ## 📦 Installation
 
@@ -32,26 +44,34 @@ For React Native 0.59 and below, you'll need to manually link:
 react-native link react-native-foreground-service
 ```
 
-### Step 3: Configure Android
+### Step 3: Configure Android (2025 Requirements)
 
-#### Add permissions to `android/app/src/main/AndroidManifest.xml`:
+#### Add permissions to `android/app/src/main/AndroidManifest.xml`
 
 ```xml
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     
-    <!-- Add these permissions -->
+    <!-- Required for foreground services -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+    
+    <!-- Required for notifications on Android 13+ -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    
+    <!-- Optional: Add specific service types as needed -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROCESSING" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
     
     <application>
         <!-- Your existing application content -->
         
-        <!-- Add this service declaration -->
+        <!-- Add this service declaration with proper service types -->
         <service
             android:name="com.reactnativeforegroundservice.ForegroundService"
             android:enabled="true"
             android:exported="false"
-            android:foregroundServiceType="dataSync" />
+            android:foregroundServiceType="dataSync|mediaProcessing" />
     </application>
 </manifest>
 ```
@@ -76,23 +96,87 @@ public class MainApplication extends Application implements ReactApplication {
 }
 ```
 
-## 🔧 Usage
+## 🔧 Usage (2025 Best Practices)
 
-### Basic Example
+### Permission-First Example
 
 ```typescript
-import React from 'react';
-import { View, Button, Alert } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Button, Alert, Platform } from 'react-native';
+import { PermissionsAndroid } from 'react-native';
 import ForegroundService from 'react-native-foreground-service';
 
 const MyComponent = () => {
+  const [hasPermissions, setHasPermissions] = useState(false);
+
+  useEffect(() => {
+    checkAllPermissions();
+  }, []);
+
+  const checkAllPermissions = async () => {
+    try {
+      // Check foreground service permission
+      const foregroundPermission = await ForegroundService.checkPermission();
+      
+      // Check notification permission (Android 13+)
+      const notificationPermission = await ForegroundService.checkNotificationPermission();
+      
+      // Check battery optimization
+      const batteryOptimization = await ForegroundService.checkBatteryOptimization();
+      
+      setHasPermissions(foregroundPermission && notificationPermission);
+      
+      if (!batteryOptimization) {
+        Alert.alert(
+          'Battery Optimization',
+          'Please disable battery optimization for this app to ensure reliable background operation.'
+        );
+      }
+    } catch (error) {
+      console.error('Error checking permissions:', error);
+    }
+  };
+
+  const requestAllPermissions = async () => {
+    try {
+      // Request notification permission on Android 13+
+      if (Platform.OS === 'android' && Platform.Version >= 33) {
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS
+        );
+        if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
+          Alert.alert('Permission Required', 'Notification permission is required for background tasks.');
+          return;
+        }
+      }
+
+      // Check foreground service permission
+      const foregroundGranted = await ForegroundService.requestPermission();
+      if (!foregroundGranted) {
+        Alert.alert('Permission Required', 'Foreground service permission is required.');
+        return;
+      }
+
+      setHasPermissions(true);
+      Alert.alert('Success', 'All permissions granted!');
+    } catch (error) {
+      Alert.alert('Error', 'Failed to request permissions');
+    }
+  };
+
   const startService = async () => {
+    if (!hasPermissions) {
+      await requestAllPermissions();
+      return;
+    }
+
     try {
       await ForegroundService.startService({
         taskName: 'MyBackgroundTask',
         taskTitle: 'App is working',
         taskDesc: 'Performing background operations...',
         importance: 'DEFAULT',
+        serviceType: 'dataSync', // Required for Android 14+
       });
       Alert.alert('Service Started', 'Check your notification panel');
     } catch (error) {
@@ -111,6 +195,9 @@ const MyComponent = () => {
 
   return (
     <View style={{ flex: 1, justifyContent: 'center', padding: 20 }}>
+      {!hasPermissions && (
+        <Button title="Request Permissions" onPress={requestAllPermissions} />
+      )}
       <Button title="Start Service" onPress={startService} />
       <Button title="Stop Service" onPress={stopService} />
     </View>

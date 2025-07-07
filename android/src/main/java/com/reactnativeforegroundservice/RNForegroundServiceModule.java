@@ -16,6 +16,7 @@ import android.app.ActivityManager;
 import android.content.pm.PackageManager;
 import android.Manifest;
 import androidx.core.content.ContextCompat;
+import androidx.core.app.NotificationManagerCompat;
 
 @ReactModule(name = RNForegroundServiceModule.NAME)
 public class RNForegroundServiceModule extends ReactContextBaseJavaModule {
@@ -161,12 +162,21 @@ public class RNForegroundServiceModule extends ReactContextBaseJavaModule {
     @ReactMethod
     public void checkPermission(Promise promise) {
         try {
+            boolean hasNotificationPermission = true;
+            boolean hasForegroundServicePermission = true;
+
+            // Check notification permission (Android 13+)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                hasNotificationPermission = NotificationManagerCompat.from(reactContext).areNotificationsEnabled();
+            }
+
+            // Check foreground service permission (Android 9+)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                 int permission = ContextCompat.checkSelfPermission(reactContext, Manifest.permission.FOREGROUND_SERVICE);
-                promise.resolve(permission == PackageManager.PERMISSION_GRANTED);
-            } else {
-                promise.resolve(true); // No permission needed for older versions
+                hasForegroundServicePermission = permission == PackageManager.PERMISSION_GRANTED;
             }
+
+            promise.resolve(hasNotificationPermission && hasForegroundServicePermission);
         } catch (Exception e) {
             promise.reject("CHECK_PERMISSION_ERROR", e.getMessage());
         }
@@ -175,15 +185,44 @@ public class RNForegroundServiceModule extends ReactContextBaseJavaModule {
     @ReactMethod
     public void requestPermission(Promise promise) {
         try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                // Note: FOREGROUND_SERVICE permission is automatically granted for apps targeting API 28+
-                // This is more for future compatibility
+            // Note: Runtime permission request should be handled at the React Native level
+            // This method provides guidance for what permissions are needed
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                // POST_NOTIFICATIONS permission needs to be requested at runtime
+                promise.resolve(false); // Indicate that runtime permission is needed
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                // FOREGROUND_SERVICE permission is automatically granted for apps targeting API 28+
                 promise.resolve(true);
             } else {
                 promise.resolve(true);
             }
         } catch (Exception e) {
             promise.reject("REQUEST_PERMISSION_ERROR", e.getMessage());
+        }
+    }
+
+    @ReactMethod
+    public void checkNotificationPermission(Promise promise) {
+        try {
+            boolean hasPermission = NotificationManagerCompat.from(reactContext).areNotificationsEnabled();
+            promise.resolve(hasPermission);
+        } catch (Exception e) {
+            promise.reject("CHECK_NOTIFICATION_PERMISSION_ERROR", e.getMessage());
+        }
+    }
+
+    @ReactMethod
+    public void checkBatteryOptimization(Promise promise) {
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                android.os.PowerManager pm = (android.os.PowerManager) reactContext.getSystemService(Context.POWER_SERVICE);
+                boolean isIgnoringOptimization = pm.isIgnoringBatteryOptimizations(reactContext.getPackageName());
+                promise.resolve(isIgnoringOptimization);
+            } else {
+                promise.resolve(true); // No battery optimization on older versions
+            }
+        } catch (Exception e) {
+            promise.reject("CHECK_BATTERY_OPTIMIZATION_ERROR", e.getMessage());
         }
     }
 }
