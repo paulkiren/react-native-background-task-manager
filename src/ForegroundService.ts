@@ -8,7 +8,7 @@ import type {
 } from './index';
 
 const LINKING_ERROR =
-  `The package 'react-native-foreground-service' doesn't seem to be linked. Make sure: \n\n` +
+  `The package 'react-native-background-task-manager' doesn't seem to be linked. Make sure: \n\n` +
   Platform.select({ ios: "- You have run 'cd ios && pod install'\n", default: '' }) +
   '- You rebuilt the app after installing the package\n' +
   '- You are not using Expo managed workflow\n';

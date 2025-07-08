@@ -8,7 +8,7 @@ Follow these simple steps to add foreground service capability to your existing 
 
 ```bash
 cd your-react-native-project
-npm install react-native-foreground-service
+npm install react-native-background-task-manager
 ```
 
 ## Step 2: Update Android Configuration
@@ -74,7 +74,7 @@ import {
   StyleSheet,
   Alert,
 } from 'react-native';
-import ForegroundService from 'react-native-foreground-service';
+import ForegroundService from 'react-native-background-task-manager';
 
 const BackgroundTaskComponent = () => {
   const [isServiceRunning, setIsServiceRunning] = useState(false);

@@ -5,9 +5,9 @@
 ### 1. Install the package
 
 ```bash
-npm install react-native-foreground-service
+npm install react-native-background-task-manager
 # or
-yarn add react-native-foreground-service
+yarn add react-native-background-task-manager
 ```
 
 ### 2. Android Configuration
@@ -54,7 +54,7 @@ public class MainApplication extends Application implements ReactApplication {
 ### 3. Usage in your component
 
 ```typescript
-import ForegroundService from 'react-native-foreground-service';
+import ForegroundService from 'react-native-background-task-manager';
 
 const YourComponent = () => {
   const startBackgroundTask = async () => {
