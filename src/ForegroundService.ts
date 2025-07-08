@@ -1,4 +1,4 @@
-import { NativeModules, Platform, PermissionsAndroid, NativeEventEmitter } from 'react-native';
+import { NativeModules, Platform, PermissionsAndroid, NativeEventEmitter, AppRegistry } from 'react-native';
 import type { 
   ForegroundServiceOptions, 
   ForegroundServiceModule, 
@@ -24,19 +24,20 @@ const RNForegroundService = NativeModules.RNForegroundService ?? new Proxy(
 
 class ForegroundServiceClass implements ForegroundServiceModule {
   private readonly eventEmitter: NativeEventEmitter | null = null;
-  // @ts-ignore - Used in addEventListener/removeEventListener methods
   private eventListener: ForegroundServiceEventListener | null = null;
+  
+  // Enhanced service tracking
+  private serviceStartTime: number | null = null;
+  private serviceCount: number = 0;
 
   constructor() {
     if (Platform.OS === 'android' && RNForegroundService) {
       this.eventEmitter = new NativeEventEmitter(RNForegroundService);
     }
-    // Initialize eventListener to avoid unused variable warning
-    this.eventListener = null;
   }
 
   /**
-   * Start the foreground service with enhanced validation
+   * Start the foreground service with enhanced validation and tracking
    */
   async startService(options: ForegroundServiceOptions): Promise<void> {
     if (Platform.OS !== 'android') {
@@ -44,7 +45,7 @@ class ForegroundServiceClass implements ForegroundServiceModule {
       return;
     }
 
-    // Validate required fields
+    // Enhanced validation
     if (!options.taskName || !options.taskTitle) {
       throw new Error('taskName and taskTitle are required fields');
     }
@@ -54,29 +55,60 @@ class ForegroundServiceClass implements ForegroundServiceModule {
       throw new Error('serviceType is required for Android 14+ (API level 34)');
     }
 
-    return RNForegroundService.startService(options);
+    try {
+      // Check permissions before starting
+      const hasPermission = await this.checkPermission();
+      if (!hasPermission) {
+        const granted = await this.requestPermission();
+        if (!granted) {
+          throw new Error('Foreground service permission denied');
+        }
+      }
+
+      await RNForegroundService.startService(options);
+      this.serviceStartTime = Date.now();
+      this.serviceCount++;
+      
+    } catch (error) {
+      throw new Error(`Failed to start foreground service: ${error}`);
+    }
   }
 
   /**
-   * Stop the foreground service
+   * Stop the foreground service with enhanced tracking
    */
   async stopService(): Promise<void> {
     if (Platform.OS !== 'android') {
       return;
     }
-    
-    return RNForegroundService.stopService();
+
+    try {
+      await RNForegroundService.stopService();
+      this.serviceCount = Math.max(0, this.serviceCount - 1);
+      
+      if (this.serviceCount === 0) {
+        this.serviceStartTime = null;
+      }
+    } catch (error) {
+      throw new Error(`Failed to stop foreground service: ${error}`);
+    }
   }
 
   /**
-   * Stop all service instances (force stop)
+   * Stop all service instances (force stop) with enhanced tracking
    */
   async stopServiceAll(): Promise<void> {
     if (Platform.OS !== 'android') {
       return;
     }
-    
-    return RNForegroundService.stopServiceAll();
+
+    try {
+      await RNForegroundService.stopServiceAll();
+      this.serviceCount = 0;
+      this.serviceStartTime = null;
+    } catch (error) {
+      throw new Error(`Failed to stop all foreground services: ${error}`);
+    }
   }
 
   /**
@@ -230,7 +262,7 @@ class ForegroundServiceClass implements ForegroundServiceModule {
   }
 
   /**
-   * Get current service status with detailed information
+   * Get current service status with detailed information and enhanced tracking
    */
   async getServiceStatus(): Promise<{
     isRunning: boolean;
@@ -244,25 +276,49 @@ class ForegroundServiceClass implements ForegroundServiceModule {
       return { isRunning: false };
     }
     
-    return RNForegroundService.getServiceStatus();
+    try {
+      const isRunning = await this.isServiceRunning();
+      const taskStats = this.TaskManager.getStats();
+      
+      const result: {
+        isRunning: boolean;
+        startTime?: number;
+        serviceType?: string;
+        notificationId?: number;
+        uptime?: number;
+        taskCount?: number;
+      } = {
+        isRunning,
+        taskCount: taskStats.totalTasks,
+        notificationId: 1,
+      };
+
+      if (this.serviceStartTime !== null && this.serviceStartTime !== undefined) {
+        result.startTime = this.serviceStartTime;
+        result.uptime = Date.now() - this.serviceStartTime;
+      }
+
+      return result;
+    } catch (error) {
+      console.error('Error getting service status:', error);
+      return { isRunning: false };
+    }
   }
 
   /**
-   * Get service performance metrics
+   * Get service performance metrics with enhanced tracking
    */
   async getServiceMetrics(): Promise<ServiceMetrics> {
-    if (Platform.OS !== 'android') {
-      return {
-        uptime: 0,
-        tasksExecuted: 0,
-        tasksSucceeded: 0,
-        tasksFailed: 0,
-        memoryUsage: 0,
-        batteryImpact: 'low'
-      };
-    }
+    const taskStats = this.TaskManager.getStats();
     
-    return RNForegroundService.getServiceMetrics();
+    return {
+      uptime: this.serviceStartTime ? Date.now() - this.serviceStartTime : 0,
+      tasksExecuted: taskStats.totalTasks,
+      tasksSucceeded: taskStats.completedTasks,
+      tasksFailed: taskStats.failedTasks,
+      memoryUsage: 0,
+      batteryImpact: 'low',
+    };
   }
 
   /**
@@ -277,36 +333,44 @@ class ForegroundServiceClass implements ForegroundServiceModule {
   }
 
   /**
-   * Register a foreground task (headless task support)
+   * Register a foreground task (headless task support) with enhanced integration
    */
   registerForegroundTask(taskName: string, task: (taskData: any) => Promise<void>): void {
     if (Platform.OS !== 'android') {
       return;
     }
     
-    RNForegroundService.registerForegroundTask(taskName, task);
+    AppRegistry.registerHeadlessTask(taskName, () => task);
   }
 
   /**
-   * Run a registered task
+   * Run a registered task with enhanced error handling
    */
   async runTask(taskConfig: { taskName: string; delay?: number; loopDelay?: number; onLoop?: boolean }): Promise<void> {
     if (Platform.OS !== 'android') {
       return;
     }
     
-    return RNForegroundService.runTask(taskConfig);
+    try {
+      await RNForegroundService.runTask(taskConfig);
+    } catch (error) {
+      throw new Error(`Failed to run task: ${error}`);
+    }
   }
 
   /**
-   * Cancel a specific notification
+   * Cancel a specific notification with enhanced error handling
    */
   async cancelNotification(notificationId: number): Promise<void> {
     if (Platform.OS !== 'android') {
       return;
     }
     
-    return RNForegroundService.cancelNotification(notificationId);
+    try {
+      await RNForegroundService.cancelNotification(notificationId);
+    } catch (error) {
+      throw new Error(`Failed to cancel notification: ${error}`);
+    }
   }
 
   /**

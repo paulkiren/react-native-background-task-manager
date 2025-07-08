@@ -102,6 +102,13 @@ export interface TaskManagerInterface {
   getAllTasks(): Record<string, TaskStatus>;
   getTaskStatus(taskId: string): TaskStatus | null;
   removeAllTasks(): void;
+  getStats(): {
+    totalTasks: number;
+    runningTasks: number;
+    pendingTasks: number;
+    completedTasks: number;
+    failedTasks: number;
+  };
 }
 
 export interface ForegroundServiceModule {
