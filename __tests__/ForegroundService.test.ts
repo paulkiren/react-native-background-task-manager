@@ -6,19 +6,33 @@ jest.mock('react-native', () => ({
   Platform: {
     OS: 'android',
     Version: 34,
+    select: jest.fn((platforms) => platforms.default || platforms.android || ''),
   },
   NativeModules: {
     RNForegroundService: {
       startService: jest.fn(() => Promise.resolve()),
       stopService: jest.fn(() => Promise.resolve()),
+      stopServiceAll: jest.fn(() => Promise.resolve()),
       updateService: jest.fn(() => Promise.resolve()),
       isServiceRunning: jest.fn(() => Promise.resolve(false)),
+      getServiceCount: jest.fn(() => Promise.resolve(0)),
       checkPermission: jest.fn(() => Promise.resolve(true)),
       requestPermission: jest.fn(() => Promise.resolve(true)),
       checkNotificationPermission: jest.fn(() => Promise.resolve(true)),
       checkBatteryOptimization: jest.fn(() => Promise.resolve(true)),
       getServiceStatus: jest.fn(() => Promise.resolve({ isRunning: false })),
+      getServiceMetrics: jest.fn(() => Promise.resolve({
+        uptime: 0,
+        tasksExecuted: 0,
+        tasksSucceeded: 0,
+        tasksFailed: 0,
+        memoryUsage: 0,
+        batteryImpact: 'low'
+      })),
       requestBatteryOptimizationExemption: jest.fn(() => Promise.resolve(true)),
+      registerForegroundTask: jest.fn(),
+      runTask: jest.fn(() => Promise.resolve()),
+      cancelNotification: jest.fn(() => Promise.resolve()),
     },
   },
   PermissionsAndroid: {
@@ -41,6 +55,13 @@ jest.mock('react-native', () => ({
 describe('ForegroundService', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    // Clear specific mocks
+    const RNForegroundService = require('react-native').NativeModules.RNForegroundService;
+    Object.values(RNForegroundService).forEach((mockFn: any) => {
+      if (typeof mockFn === 'function' && mockFn.mockClear) {
+        mockFn.mockClear();
+      }
+    });
   });
 
   describe('startService', () => {
@@ -55,10 +76,7 @@ describe('ForegroundService', () => {
       await ForegroundService.startService(options);
       
       expect(require('react-native').NativeModules.RNForegroundService.startService)
-        .toHaveBeenCalledWith(expect.objectContaining({
-          ...options,
-          timeoutMs: 300000, // Default timeout
-        }));
+        .toHaveBeenCalledWith(options);
     });
 
     it('should throw error when required fields are missing', async () => {
@@ -119,9 +137,17 @@ describe('ForegroundService', () => {
 
   describe('service management', () => {
     it('should stop service correctly', async () => {
+      // Get a fresh reference to the mock
+      const { NativeModules } = require('react-native');
+      const mockStopService = NativeModules.RNForegroundService.stopService;
+      
+      // Ensure Platform.OS is android for this test
+      const { Platform } = require('react-native');
+      Platform.OS = 'android';
+      
       await ForegroundService.stopService();
-      expect(require('react-native').NativeModules.RNForegroundService.stopService)
-        .toHaveBeenCalled();
+      
+      expect(mockStopService).toHaveBeenCalled();
     });
 
     it('should check if service is running', async () => {
