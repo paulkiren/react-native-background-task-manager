@@ -24,7 +24,6 @@ const RNForegroundService = NativeModules.RNForegroundService ?? new Proxy(
 
 class ForegroundServiceClass implements ForegroundServiceModule {
   private readonly eventEmitter: NativeEventEmitter | null = null;
-  private eventListener: ForegroundServiceEventListener | null = null;
   
   // Enhanced service tracking
   private serviceStartTime: number | null = null;
@@ -216,8 +215,6 @@ class ForegroundServiceClass implements ForegroundServiceModule {
    * Register event listeners for service events
    */
   addEventListener(listener: ForegroundServiceEventListener): void {
-    this.eventListener = listener;
-    
     if (!this.eventEmitter || Platform.OS !== 'android') {
       return;
     }
@@ -258,7 +255,6 @@ class ForegroundServiceClass implements ForegroundServiceModule {
       this.eventEmitter.removeAllListeners('onTaskComplete');
       this.eventEmitter.removeAllListeners('onTaskError');
     }
-    this.eventListener = null;
   }
 
   /**

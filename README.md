@@ -5,31 +5,39 @@
 [![Platform](https://img.shields.io/badge/platform-android-green.svg)](https://developer.android.com)
 [![React Native](https://img.shields.io/badge/React%20Native-0.70+-blue.svg)](https://reactnative.dev)
 [![Android API](https://img.shields.io/badge/Android%20API-21+-brightgreen.svg)](https://developer.android.com/guide/topics/manifest/uses-sdk-element)
+[![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue.svg)](https://www.typescriptlang.org)
+[![Tests](https://img.shields.io/badge/Tests-Passing-brightgreen.svg)](https://jestjs.io)
 
-A comprehensive React Native library for managing foreground services with advanced task management, Android 14+ compliance, and enhanced notification capabilities.
+> **The most comprehensive React Native library for managing foreground services with advanced task management, Android 14+ compliance, and enhanced notification capabilities.**
 
-## ✨ Features
+Perfect for apps that need to perform long-running background tasks like data synchronization, file processing, location tracking, or media processing while keeping users informed through rich, interactive notifications.
+
+## ✨ Why Choose This Library?
 
 ### 🎯 Core Features
-- 🔥 **Foreground Services** - Keep your app running in the background
-- 📱 **Rich Notifications** - Customizable notifications with actions, progress bars, and buttons
-- 🔄 **Task Management** - Advanced task scheduling, prioritization, and retry mechanisms
-- 🛡️ **Android 14+ Ready** - Full compliance with latest Android requirements
-- ⚡ **Permission Handling** - Automated permission requests and validation
+
+- 🔥 **Foreground Services** - Keep your app running in the background with persistent notifications
+- 📱 **Rich Notifications** - Customizable notifications with actions, progress bars, and buttons  
+- 🔄 **Advanced Task Management** - Task scheduling, prioritization, retry mechanisms, and lifecycle control
+- 🛡️ **Android 14+ Ready** - Full compliance with latest Android requirements and service types
+- ⚡ **Smart Permission Handling** - Automated permission requests and validation for all Android versions
 - 🔋 **Battery Optimization** - Built-in battery optimization exemption handling
-- 📊 **Service Metrics** - Real-time performance monitoring and statistics
+- 📊 **Service Metrics** - Real-time performance monitoring and detailed statistics
+- 🏗️ **Production Ready** - Comprehensive test coverage, TypeScript support, and extensive documentation
 
 ### 🎨 Enhanced Capabilities
-- 🎮 **Multiple Action Buttons** - Up to 3 interactive notification buttons
-- 📈 **Progress Tracking** - Determinate and indeterminate progress indicators
-- 🎵 **Custom Sounds & Vibration** - Personalized notification experience
-- 🔗 **Event System** - Comprehensive event listeners for service lifecycle
-- 🧩 **Headless Tasks** - Background task execution support
-- 📱 **Cross-Platform** - Works seamlessly on Android (iOS support planned)
+
+- 🎮 **Multiple Action Buttons** - Up to 3 interactive notification buttons with custom handlers
+- 📈 **Progress Tracking** - Determinate and indeterminate progress indicators with real-time updates
+- 🎵 **Custom Notifications** - Sounds, vibration, colors, and visual customization
+- 🔗 **Event System** - Comprehensive event listeners for service lifecycle management
+- 🧩 **Headless Tasks** - Background task execution support for React Native
+- 📱 **Cross-Platform** - Seamlessly works on Android (iOS support planned)
+- 🔒 **Type Safe** - Full TypeScript support with comprehensive type definitions
 
 ## 🚀 Quick Start
 
-### Installation
+### 📦 Installation
 
 ```bash
 npm install react-native-background-task-manager
@@ -37,7 +45,7 @@ npm install react-native-background-task-manager
 yarn add react-native-background-task-manager
 ```
 
-### Basic Usage
+### ⚡ Basic Usage
 
 ```typescript
 import ForegroundService from 'react-native-background-task-manager';
@@ -48,18 +56,23 @@ await ForegroundService.startService({
   taskTitle: 'Background Sync',
   taskDesc: 'Syncing data with server...',
   serviceType: 'dataSync', // Required for Android 14+
+  importance: 'DEFAULT',
+  color: '#4CAF50'
 });
+
+// Check if service is running
+const isRunning = await ForegroundService.isServiceRunning();
 
 // Stop the service
 await ForegroundService.stopService();
 ```
 
-### Advanced Usage with Progress
+### 🎨 Advanced Usage with Progress
 
 ```typescript
 import ForegroundService from 'react-native-background-task-manager';
 
-// Start service with progress tracking
+// Start service with progress tracking and action buttons
 await ForegroundService.startService({
   taskName: 'FileProcessor',
   taskTitle: 'Processing Files',
@@ -84,7 +97,11 @@ await ForegroundService.startService({
   // Visual customization
   color: '#4CAF50',
   vibration: true,
-  setOnlyAlertOnce: true
+  setOnlyAlertOnce: true,
+  
+  // Auto-stop after completion
+  autoStop: true,
+  timeoutMs: 300000 // 5 minutes timeout
 });
 
 // Update progress
@@ -92,268 +109,211 @@ await ForegroundService.updateService({
   taskDesc: 'Processing... 50%',
   progress: { max: 100, curr: 50 }
 });
-```
 
-## 📖 Complete API Reference
-
-### Core Methods
-
-#### `startService(options: ForegroundServiceOptions): Promise<void>`
-Starts a foreground service with the specified configuration.
-
-**Parameters:**
-- `taskName` (string) - Unique identifier for the task
-- `taskTitle` (string) - Title shown in the notification
-- `taskDesc` (string) - Description shown in the notification
-- `serviceType` (string) - Required for Android 14+. Options: `'dataSync'`, `'mediaProcessing'`, `'location'`, etc.
-- `importance` (string) - Notification importance: `'NONE'`, `'MIN'`, `'LOW'`, `'DEFAULT'`, `'HIGH'`
-- `progress` (object) - Progress configuration with `max`, `curr`, and `indeterminate` properties
-- `actions` (array) - Array of action button configurations
-- `color` (string) - Notification accent color
-- `vibration` (boolean) - Enable vibration
-- `sound` (string) - Custom notification sound
-
-#### `stopService(): Promise<void>`
-Stops the currently running foreground service.
-
-#### `updateService(options: Partial<ForegroundServiceOptions>): Promise<void>`
-Updates the notification content and progress of a running service.
-
-#### `isServiceRunning(): Promise<boolean>`
-Checks if the foreground service is currently running.
-
-### Permission Methods
-
-#### `checkPermission(): Promise<boolean>`
-Checks if all required permissions are granted.
-
-#### `requestPermission(): Promise<boolean>`
-Requests foreground service permissions from the user.
-
-#### `checkNotificationPermission(): Promise<boolean>`
-Checks notification permission status (Android 13+).
-
-#### `checkBatteryOptimization(): Promise<boolean>`
-Checks if the app is exempted from battery optimization.
-
-#### `requestBatteryOptimizationExemption(): Promise<boolean>`
-Requests battery optimization exemption from the user.
-
-### Service Information
-
-#### `getServiceStatus(): Promise<ServiceStatus>`
-Returns detailed information about the current service status.
-
-```typescript
-interface ServiceStatus {
-  isRunning: boolean;
-  startTime?: number;
-  serviceType?: string;
-  notificationId?: number;
-  uptime?: number;
-  taskCount?: number;
-}
-```
-
-#### `getServiceMetrics(): Promise<ServiceMetrics>`
-Returns performance metrics for the service.
-
-```typescript
-interface ServiceMetrics {
-  uptime: number;
-  tasksExecuted: number;
-  tasksSucceeded: number;
-  tasksFailed: number;
-  memoryUsage: number;
-  batteryImpact: 'low' | 'medium' | 'high';
-}
-```
-
-### Task Management
-
-#### `TaskManager.addTask(task: Function, config: TaskConfig): string`
-Adds a new background task to the task manager.
-
-```typescript
-const taskId = ForegroundService.TaskManager.addTask(
-  async () => {
-    // Your background task logic
-    console.log('Executing background task...');
-  },
-  {
-    delay: 5000,
-    onLoop: true,
-    priority: 'high',
-    retryCount: 3,
-    timeout: 30000,
-    onSuccess: () => console.log('Task completed'),
-    onError: (error) => console.error('Task failed:', error)
-  }
-);
-```
-
-#### `TaskManager.getStats(): TaskStats`
-Returns statistics about all managed tasks.
-
-### Event Handling
-
-#### `addEventListener(listener: ForegroundServiceEventListener): void`
-Registers event listeners for service lifecycle events.
-
-```typescript
+// Handle action button presses
 ForegroundService.addEventListener({
-  onServiceStart: () => console.log('Service started'),
-  onServiceStop: () => console.log('Service stopped'),
-  onServiceError: (error) => console.error('Service error:', error),
   onActionPress: (actionId) => {
-    if (actionId === 'pause') {
-      // Handle pause action
+    switch(actionId) {
+      case 'pause':
+        // Handle pause action
+        break;
+      case 'stop':
+        ForegroundService.stopService();
+        break;
     }
-  },
-  onTaskComplete: (taskId) => console.log('Task completed:', taskId),
-  onTaskError: (taskId, error) => console.error('Task error:', taskId, error)
+  }
 });
 ```
 
-## 🔧 Configuration
+### 🔧 Task Management
 
-### Android Setup
+```typescript
+import { TaskManager } from 'react-native-background-task-manager';
 
-Add the following permissions to your `android/app/src/main/AndroidManifest.xml`:
+// Add a recurring task
+const taskId = TaskManager.addTask(
+  async () => {
+    // Your background task logic
+    console.log('Executing background task...');
+    await syncDataWithServer();
+  },
+  {
+    delay: 5000,        // Initial delay
+    onLoop: true,       // Repeat task
+    priority: 'high',   // Task priority
+    retryCount: 3,      // Retry on failure
+    timeout: 30000,     // Task timeout
+    onSuccess: () => console.log('Task completed successfully'),
+    onError: (error) => console.error('Task failed:', error)
+  }
+);
+
+// Get task statistics
+const stats = TaskManager.getStats();
+console.log(`Running tasks: ${stats.runningTasks}`);
+
+// Control tasks
+TaskManager.pauseTask(taskId);
+TaskManager.resumeTask(taskId);
+TaskManager.removeTask(taskId);
+```
+
+## 📚 Documentation
+
+### 📖 Complete Guides
+
+- **[📋 API Reference](./docs/API.md)** - Complete API documentation with examples
+- **[🛠️ Installation Guide](./docs/INSTALLATION.md)** - Detailed setup instructions for Android
+- **[⚡ Quick Start Guide](./docs/QUICK_START.md)** - Get up and running in minutes
+- **[📝 Examples Collection](./docs/EXAMPLES.md)** - Real-world usage examples and demos
+- **[❓ FAQ](./docs/FAQ.md)** - Frequently asked questions and solutions
+- **[🔄 Migration Guide](./docs/MIGRATION.md)** - Upgrading from older versions
+
+### 🔗 Quick Links
+
+| Topic | Description | Link |
+|-------|-------------|------|
+| **Service Types** | Android 14+ service type requirements | [See Installation Guide](./docs/INSTALLATION.md#service-types) |
+| **Permissions** | Required permissions and setup | [See Installation Guide](./docs/INSTALLATION.md#permissions) |
+| **Troubleshooting** | Common issues and solutions | [See FAQ](./docs/FAQ.md) |
+| **Examples** | Real-world usage examples | [See Examples](./docs/EXAMPLES.md) |
+
+## 🛠️ Android Setup Requirements
+
+### Required Permissions
+
+Add to `android/app/src/main/AndroidManifest.xml`:
 
 ```xml
-<!-- Required permissions -->
+<!-- Core permissions -->
 <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-<uses-permission android:name="android.permission.WAKE_LOCK" />
-
-<!-- Android 13+ notification permission -->
 <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+<uses-permission android:name="android.permission.WAKE_LOCK" />
 
 <!-- Android 14+ service type permissions -->
 <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
 <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROCESSING" />
-<uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
-
-<!-- Service declaration -->
-<service
-    android:name="com.reactnativeforegroundservice.ForegroundService"
-    android:enabled="true"
-    android:exported="false"
-    android:foregroundServiceType="dataSync|mediaProcessing|location" />
+<!-- Add other service types as needed -->
 ```
 
-### Proguard Configuration
+### Service Declaration
 
-Add to your `android/app/proguard-rules.pro`:
-
-```proguard
--keep class com.reactnativeforegroundservice.** { *; }
--dontwarn com.reactnativeforegroundservice.**
+```xml
+<application>
+  <service
+      android:name="com.reactnativeforegroundservice.ForegroundService"
+      android:enabled="true"
+      android:exported="false"
+      android:foregroundServiceType="dataSync|mediaProcessing" />
+</application>
 ```
 
-## 📱 Platform Support
+**For complete setup instructions, see [Installation Guide](./docs/INSTALLATION.md)**
 
-| Platform | Support | Notes |
-|----------|---------|--------|
-| Android 5.1+ (API 22+) | ✅ Full Support | All features available |
-| Android 8.0+ (API 26+) | ✅ Enhanced Support | Background execution limits handled |
-| Android 14+ (API 34+) | ✅ Latest Support | Service type validation required |
-| iOS | 🚧 Planned | Background task support planned |
+## 🔧 Android 14+ Service Types
 
-## 🎯 Service Types (Android 14+)
+| Service Type | Permission | Use Case |
+|-------------|------------|----------|
+| `dataSync` | `FOREGROUND_SERVICE_DATA_SYNC` | Data synchronization, API calls |
+| `mediaProcessing` | `FOREGROUND_SERVICE_MEDIA_PROCESSING` | Audio/video processing |
+| `location` | `FOREGROUND_SERVICE_LOCATION` | GPS tracking, location services |
+| `camera` | `FOREGROUND_SERVICE_CAMERA` | Camera operations |
+| `microphone` | `FOREGROUND_SERVICE_MICROPHONE` | Audio recording |
+| `phoneCall` | `FOREGROUND_SERVICE_PHONE_CALL` | VoIP, calling features |
 
-| Service Type | Use Case | Permission Required |
-|--------------|----------|-------------------|
-| `dataSync` | Data synchronization | `FOREGROUND_SERVICE_DATA_SYNC` |
-| `mediaProcessing` | Media/file processing | `FOREGROUND_SERVICE_MEDIA_PROCESSING` |
-| `location` | Location-based services | `FOREGROUND_SERVICE_LOCATION` |
-| `camera` | Camera operations | `FOREGROUND_SERVICE_CAMERA` |
-| `microphone` | Audio recording | `FOREGROUND_SERVICE_MICROPHONE` |
-| `phoneCall` | VoIP calls | `FOREGROUND_SERVICE_PHONE_CALL` |
-| `mediaPlayback` | Media playback | `FOREGROUND_SERVICE_MEDIA_PLAYBACK` |
+## 🎯 Real-World Examples
 
-## 🧪 Examples
+### 📊 Data Synchronization
 
-Check out the comprehensive examples in the `/example` folder:
-
-- **[Basic Example](./example/ForegroundServiceExample.tsx)** - Simple service with progress tracking
-- **[Advanced Example](./example/EnhancedForegroundServiceExample.tsx)** - Full-featured implementation with task management
-
-### Running Examples
-
-```bash
-# Clone the repository
-git clone https://github.com/your-username/react-native-background-task-manager.git
-
-# Install dependencies
-cd react-native-background-task-manager
-npm install
-
-# Run the example app
-cd example
-npx react-native run-android
-```
-
-## 🔍 Troubleshooting
-
-### Common Issues
-
-#### Permission Denied
 ```typescript
-// Always check and request permissions before starting service
-const hasPermission = await ForegroundService.checkPermission();
-if (!hasPermission) {
-  await ForegroundService.requestPermission();
-}
-```
-
-#### Service Not Starting (Android 14+)
-```typescript
-// Service type is required for Android 14+
+// Perfect for apps that sync data in the background
 await ForegroundService.startService({
-  // ... other options
-  serviceType: 'dataSync', // This is required!
+  taskName: 'DataSync',
+  taskTitle: 'Syncing Data',
+  taskDesc: 'Downloading latest updates...',
+  serviceType: 'dataSync',
+  importance: 'LOW',
+  color: '#2196F3',
+  progress: { max: 100, curr: 0 },
+  autoStop: true
 });
 ```
 
-#### Battery Optimization Issues
-```typescript
-// Check and request battery optimization exemption
-const isBatteryOptimized = await ForegroundService.checkBatteryOptimization();
-if (!isBatteryOptimized) {
-  await ForegroundService.requestBatteryOptimizationExemption();
-}
-```
-
-### Debug Mode
-
-Enable debug logging by setting:
+### 🎵 Media Processing
 
 ```typescript
-// Add this to your app's index.js or App.js
-if (__DEV__) {
-  console.log('[ForegroundService] Debug mode enabled');
-}
+// Ideal for audio/video processing apps
+await ForegroundService.startService({
+  taskName: 'AudioProcessor',
+  taskTitle: 'Processing Audio',
+  taskDesc: 'Converting audio files...',
+  serviceType: 'mediaProcessing',
+  importance: 'DEFAULT',
+  actions: [
+    { id: 'pause', title: 'Pause', icon: 'pause' },
+    { id: 'cancel', title: 'Cancel', icon: 'close' }
+  ],
+  progress: { max: 100, curr: 0 }
+});
 ```
 
-## 📊 Performance
+### 📍 Location Tracking
 
-### Memory Usage
-- **Minimal footprint**: ~1-2MB additional memory
-- **No memory leaks**: Proper cleanup on service stop
-- **Efficient notifications**: Reuses notification channels
+```typescript
+// Great for fitness, delivery, or tracking apps
+await ForegroundService.startService({
+  taskName: 'LocationTracker',
+  taskTitle: 'Tracking Location',
+  taskDesc: 'Recording your route...',
+  serviceType: 'location',
+  importance: 'DEFAULT',
+  actions: [
+    { id: 'stop', title: 'Stop Tracking', icon: 'stop' }
+  ],
+  color: '#4CAF50'
+});
+```
 
-### Battery Impact
-- **Optimized**: Uses minimal CPU when idle
-- **Smart updates**: Only updates when necessary
-- **User control**: Easy to stop service
+## 📈 Performance & Best Practices
 
-## 🔒 Security & Privacy
+### 🔋 Battery Optimization
 
-- ❌ **No Data Collection**: Library doesn't collect any user data
-- ✅ **Local Processing**: All operations are performed locally
-- ✅ **No Network**: No network requests made by the library
-- ✅ **Minimal Permissions**: Only requests necessary permissions
+- **Request Exemption:** Always request battery optimization exemption for critical services
+- **Service Types:** Use specific service types instead of generic ones  
+- **Auto-Stop:** Enable `autoStop` for finite tasks to prevent unnecessary battery drain
+
+### 📱 User Experience
+
+- **Clear Descriptions:** Use descriptive task titles and descriptions
+- **Progress Updates:** Keep users informed with progress indicators
+- **Action Buttons:** Provide pause/stop controls for better user control
+
+### 🔧 Development Tips
+
+- **Error Handling:** Always wrap service calls in try-catch blocks
+- **Permission Checks:** Verify permissions before starting services
+- **Testing:** Test on various Android versions and devices
+
+## 🧪 Testing
+
+Run the comprehensive test suite:
+
+```bash
+# Run all tests
+npm test
+
+# Run tests in watch mode
+npm run test:watch
+
+# Run tests with coverage
+npm run test:coverage
+
+# Type checking
+npm run typescript
+
+# Linting
+npm run lint
+```
 
 ## 🤝 Contributing
 
@@ -362,37 +322,34 @@ We welcome contributions! Please see our [Contributing Guide](./CONTRIBUTING.md)
 ### Development Setup
 
 ```bash
-# Clone and install
-git clone https://github.com/your-username/react-native-background-task-manager.git
+git clone https://github.com/paulkiren/react-native-background-task-manager.git
 cd react-native-background-task-manager
 npm install
-
-# Run tests
-npm test
-
-# Run linting
-npm run lint
-
-# Build the library
-npm run prepare
+npm run validate
 ```
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](./LICENSE) file for details.
+MIT License - see [LICENSE](./LICENSE) for details.
 
 ## 🙏 Acknowledgments
 
-- React Native community for the amazing framework
-- Android developers for foreground service capabilities
-- Contributors and users who make this library better
+- React Native community for inspiration and feedback
+- Android developers for comprehensive foreground service documentation
+- Contributors who help improve this library
 
 ## 📞 Support
 
-- 📖 **Documentation**: [Full Documentation](./docs/README.md)
-- 🐛 **Issues**: [GitHub Issues](https://github.com/your-username/react-native-background-task-manager/issues)
-- 💬 **Discussions**: [GitHub Discussions](https://github.com/your-username/react-native-background-task-manager/discussions)
+- 🐛 **Bug Reports:** [GitHub Issues](https://github.com/paulkiren/react-native-background-task-manager/issues)
+- 💬 **Questions:** [GitHub Discussions](https://github.com/paulkiren/react-native-background-task-manager/discussions)  
+- 📖 **Documentation:** [API Reference](./docs/API.md)
 
 ---
 
-**Made with ❤️ for the React Native community**
+<div align="center">
+
+**[⬆ Back to Top](#-react-native-background-task-manager)**
+
+Made with ❤️ by the React Native community
+
+</div>
