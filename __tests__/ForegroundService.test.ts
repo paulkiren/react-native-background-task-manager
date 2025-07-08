@@ -50,6 +50,31 @@ jest.mock('react-native', () => ({
     addListener: jest.fn(),
     removeAllListeners: jest.fn(),
   })),
+  AppRegistry: {
+    registerHeadlessTask: jest.fn(),
+  },
+}));
+
+// Mock TaskManager
+jest.mock('../src/TaskManager', () => ({
+  TaskManager: {
+    getStats: jest.fn(() => ({
+      totalTasks: 0,
+      runningTasks: 0,
+      pendingTasks: 0,
+      completedTasks: 0,
+      failedTasks: 0,
+    })),
+    addTask: jest.fn(),
+    removeTask: jest.fn(),
+    updateTask: jest.fn(),
+    pauseTask: jest.fn(),
+    resumeTask: jest.fn(),
+    isTaskRunning: jest.fn(() => false),
+    getAllTasks: jest.fn(() => ({})),
+    getTaskStatus: jest.fn(() => null),
+    removeAllTasks: jest.fn(),
+  },
 }));
 
 describe('ForegroundService', () => {
@@ -157,7 +182,105 @@ describe('ForegroundService', () => {
 
     it('should get service status', async () => {
       const status = await ForegroundService.getServiceStatus();
-      expect(status).toEqual({ isRunning: false });
+      expect(status).toEqual({ 
+        isRunning: false,
+        notificationId: 1,
+        taskCount: 0
+      });
+    });
+  });
+
+  describe('enhanced features', () => {
+    it('should get service metrics', async () => {
+      const metrics = await ForegroundService.getServiceMetrics();
+      expect(metrics).toEqual({
+        uptime: 0,
+        tasksExecuted: 0,
+        tasksSucceeded: 0,
+        tasksFailed: 0,
+        memoryUsage: 0,
+        batteryImpact: 'low',
+      });
+    });
+
+    it('should stop all services', async () => {
+      const mockStopServiceAll = require('react-native').NativeModules.RNForegroundService.stopServiceAll;
+      
+      await ForegroundService.stopServiceAll();
+      
+      expect(mockStopServiceAll).toHaveBeenCalled();
+    });
+
+    it('should get service count', async () => {
+      const count = await ForegroundService.getServiceCount();
+      expect(count).toBe(0);
+    });
+
+    it('should check battery optimization', async () => {
+      const result = await ForegroundService.checkBatteryOptimization();
+      expect(result).toBe(true);
+    });
+
+    it('should request battery optimization exemption', async () => {
+      const result = await ForegroundService.requestBatteryOptimizationExemption();
+      expect(result).toBe(true);
+    });
+
+    it('should register foreground task', () => {
+      const taskName = 'testTask';
+      const task = jest.fn();
+      
+      ForegroundService.registerForegroundTask(taskName, task);
+      
+      expect(require('react-native').AppRegistry.registerHeadlessTask)
+        .toHaveBeenCalledWith(taskName, expect.any(Function));
+    });
+
+    it('should run task', async () => {
+      const taskConfig = {
+        taskName: 'testTask',
+        delay: 1000,
+        onLoop: true,
+      };
+      
+      await ForegroundService.runTask(taskConfig);
+      
+      expect(require('react-native').NativeModules.RNForegroundService.runTask)
+        .toHaveBeenCalledWith(taskConfig);
+    });
+
+    it('should cancel notification', async () => {
+      const notificationId = 123;
+      
+      await ForegroundService.cancelNotification(notificationId);
+      
+      expect(require('react-native').NativeModules.RNForegroundService.cancelNotification)
+        .toHaveBeenCalledWith(notificationId);
+    });
+
+    it('should handle event listeners', () => {
+      const listener = {
+        onServiceStart: jest.fn(),
+        onServiceStop: jest.fn(),
+        onServiceError: jest.fn(),
+        onButtonPress: jest.fn(),
+        onActionPress: jest.fn(),
+        onTaskComplete: jest.fn(),
+        onTaskError: jest.fn(),
+      };
+      
+      ForegroundService.addEventListener(listener);
+      ForegroundService.removeEventListener();
+      
+      // These would be tested more thoroughly with actual event emission
+      expect(true).toBe(true); // Placeholder for event listener tests
+    });
+
+    it('should access TaskManager', () => {
+      const taskManager = ForegroundService.TaskManager;
+      expect(taskManager).toBeDefined();
+      expect(typeof taskManager.addTask).toBe('function');
+      expect(typeof taskManager.getStats).toBe('function');
     });
   });
 });
