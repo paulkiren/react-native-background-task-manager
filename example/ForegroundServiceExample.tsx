@@ -7,7 +7,7 @@ import {
   Alert,
   ScrollView,
 } from 'react-native';
-import ForegroundService from 'react-native-foreground-service';
+import ForegroundService from 'react-native-background-task-manager'; // Adjust import based on your package
 
 const ForegroundServiceExample = () => {
   const [isRunning, setIsRunning] = useState(false);

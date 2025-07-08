@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, Button, Alert, StyleSheet } from 'react-native';
-import ForegroundService from 'react-native-foreground-service';
+import ForegroundService from 'react-native-background-task-manager'; // Adjust import based on your package
 
 export default function EnhancedForegroundServiceExample() {
   const [isServiceRunning, setIsServiceRunning] = useState(false);
