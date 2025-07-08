@@ -190,7 +190,7 @@ export interface ForegroundServiceModule {
   /**
    * Register a foreground task (headless task support)
    */
-  registerForegroundTask(taskName: string, task: Function): void;
+  registerForegroundTask(taskName: string, task: (taskData: any) => Promise<void>): void;
   
   /**
    * Run a registered task

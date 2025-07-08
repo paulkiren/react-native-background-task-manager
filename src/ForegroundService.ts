@@ -24,12 +24,15 @@ const RNForegroundService = NativeModules.RNForegroundService ?? new Proxy(
 
 class ForegroundServiceClass implements ForegroundServiceModule {
   private readonly eventEmitter: NativeEventEmitter | null = null;
+  // @ts-ignore - Used in addEventListener/removeEventListener methods
   private eventListener: ForegroundServiceEventListener | null = null;
 
   constructor() {
     if (Platform.OS === 'android' && RNForegroundService) {
       this.eventEmitter = new NativeEventEmitter(RNForegroundService);
     }
+    // Initialize eventListener to avoid unused variable warning
+    this.eventListener = null;
   }
 
   /**
@@ -276,7 +279,7 @@ class ForegroundServiceClass implements ForegroundServiceModule {
   /**
    * Register a foreground task (headless task support)
    */
-  registerForegroundTask(taskName: string, task: Function): void {
+  registerForegroundTask(taskName: string, task: (taskData: any) => Promise<void>): void {
     if (Platform.OS !== 'android') {
       return;
     }

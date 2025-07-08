@@ -252,13 +252,25 @@ class ForegroundServiceClass implements ForegroundServiceModule {
       const isRunning = await this.isServiceRunning();
       const taskStats = this.TaskManager.getStats();
       
-      return {
+      const result: {
+        isRunning: boolean;
+        startTime?: number;
+        serviceType?: string;
+        notificationId?: number;
+        uptime?: number;
+        taskCount?: number;
+      } = {
         isRunning,
-        startTime: this.serviceStartTime ?? undefined,
-        uptime: this.serviceStartTime ? Date.now() - this.serviceStartTime : undefined,
         taskCount: taskStats.totalTasks,
         notificationId: 1,
       };
+
+      if (this.serviceStartTime !== null && this.serviceStartTime !== undefined) {
+        result.startTime = this.serviceStartTime;
+        result.uptime = Date.now() - this.serviceStartTime;
+      }
+
+      return result;
     } catch (error) {
       console.error('Error getting service status:', error);
       return { isRunning: false };
@@ -278,7 +290,7 @@ class ForegroundServiceClass implements ForegroundServiceModule {
     };
   }
 
-  registerForegroundTask(taskName: string, task: Function): void {
+  registerForegroundTask(taskName: string, task: (taskData: any) => Promise<void>): void {
     AppRegistry.registerHeadlessTask(taskName, () => task);
   }
 

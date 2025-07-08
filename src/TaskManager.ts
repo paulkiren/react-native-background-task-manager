@@ -132,8 +132,8 @@ export class TaskManagerClass {
         taskId: task.taskId,
         isRunning: task.status === 'running',
         executionCount: task.executionCount,
-        lastExecutionTime: task.lastExecutionTime,
-        nextExecutionTime: task.nextExecutionTime,
+        ...(task.lastExecutionTime !== undefined && { lastExecutionTime: task.lastExecutionTime }),
+        ...(task.nextExecutionTime !== undefined && { nextExecutionTime: task.nextExecutionTime }),
         status: task.status
       };
     }
@@ -152,8 +152,8 @@ export class TaskManagerClass {
       taskId: task.taskId,
       isRunning: task.status === 'running',
       executionCount: task.executionCount,
-      lastExecutionTime: task.lastExecutionTime,
-      nextExecutionTime: task.nextExecutionTime,
+      ...(task.lastExecutionTime !== undefined && { lastExecutionTime: task.lastExecutionTime }),
+      ...(task.nextExecutionTime !== undefined && { nextExecutionTime: task.nextExecutionTime }),
       status: task.status
     };
   }
@@ -281,7 +281,7 @@ export class TaskManagerClass {
   /**
    * Register a headless task for background execution
    */
-  registerForegroundTask(taskName: string, task: Function): void {
+  registerForegroundTask(taskName: string, task: (taskData: any) => Promise<void>): void {
     AppRegistry.registerHeadlessTask(taskName, () => task);
   }
 

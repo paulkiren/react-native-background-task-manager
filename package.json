@@ -33,10 +33,10 @@
     "format:check": "prettier --check \"**/*.{js,ts,tsx,json,md}\"",
     "prepare": "bob build && husky install",
     "release": "semantic-release",
-    "example": "yarn --cwd example",
+    "example": "npm --prefix example",
     "pods": "cd example && pod-install --quiet",
-    "bootstrap": "yarn example && yarn && yarn pods",
-    "validate": "yarn typescript && yarn lint && yarn test",
+    "bootstrap": "npm run example && npm install && npm run pods",
+    "validate": "npm run typescript && npm run lint && npm run test",
     "precommit": "lint-staged"
   },
   "keywords": [
