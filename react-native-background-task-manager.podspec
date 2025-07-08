@@ -14,7 +14,7 @@ Pod::Spec.new do |s|
   s.authors      = package["author"]
 
   s.platforms    = { :ios => "10.0" }
-  s.source       = { :git => "https://github.com/yourusername/react-native-background-task-manager.git", :tag => "#{s.version}" }
+  s.source       = { :git => "https://github.com/paulkiren/react-native-background-task-manager.git", :tag => "#{s.version}" }
 
   s.source_files = "ios/**/*.{h,c,cc,cpp,m,mm,swift}"
   s.requires_arc = true
