@@ -24,12 +24,28 @@ import android.provider.Settings;
 import android.Manifest;
 import androidx.core.content.ContextCompat;
 import androidx.core.app.NotificationManagerCompat;
+import android.content.BroadcastReceiver;
+import android.content.IntentFilter;
+import com.facebook.react.bridge.LifecycleEventListener;
+
 
 @ReactModule(name = RNForegroundServiceModule.NAME)
-public class RNForegroundServiceModule extends ReactContextBaseJavaModule {
+public class RNForegroundServiceModule extends ReactContextBaseJavaModule implements LifecycleEventListener {
     public static final String NAME = "RNForegroundService";
     private ReactApplicationContext reactContext;
     
+    private final BroadcastReceiver buttonPressReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String actionId = intent.getStringExtra("actionId");
+            if (actionId != null) {
+                WritableMap params = Arguments.createMap();
+                params.putString("actionId", actionId);
+                sendEvent("onActionPress", params);
+            }
+        }
+    };
+
     // Enhanced permission arrays for different Android versions
     private static final String[] REQUIRED_PERMISSIONS_API_33 = {
         Manifest.permission.FOREGROUND_SERVICE,
@@ -45,6 +61,29 @@ public class RNForegroundServiceModule extends ReactContextBaseJavaModule {
     public RNForegroundServiceModule(ReactApplicationContext reactContext) {
         super(reactContext);
         this.reactContext = reactContext;
+        reactContext.addLifecycleEventListener(this);
+
+        IntentFilter filter = new IntentFilter(ForegroundService.ACTION_BUTTON_PRESSED);
+        reactContext.registerReceiver(buttonPressReceiver, filter);
+    }
+
+    @Override
+    public void onHostResume() {
+        // Not needed
+    }
+
+    @Override
+    public void onHostPause() {
+        // Not needed
+    }
+
+    @Override
+    public void onHostDestroy() {
+        try {
+            reactContext.unregisterReceiver(buttonPressReceiver);
+        } catch (IllegalArgumentException e) {
+            // Receiver not registered, ignore
+        }
     }
 
     @Override
@@ -138,6 +177,12 @@ public class RNForegroundServiceModule extends ReactContextBaseJavaModule {
                     }
                 }
             }
+            if (options.hasKey("color")) {
+                serviceIntent.putExtra("color", options.getString("color"));
+            }
+            if (options.hasKey("number")) {
+                serviceIntent.putExtra("number", options.getInt("number"));
+            }
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 reactContext.startForegroundService(serviceIntent);
@@ -154,14 +199,7 @@ public class RNForegroundServiceModule extends ReactContextBaseJavaModule {
     @ReactMethod
     public void isServiceRunning(Promise promise) {
         try {
-            ActivityManager manager = (ActivityManager) reactContext.getSystemService(Context.ACTIVITY_SERVICE);
-            for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
-                if (ForegroundService.class.getName().equals(service.service.getClassName())) {
-                    promise.resolve(true);
-                    return;
-                }
-            }
-            promise.resolve(false);
+            promise.resolve(ForegroundService.isRunning);
         } catch (Exception e) {
             promise.reject("CHECK_SERVICE_ERROR", e.getMessage());
         }
@@ -502,12 +540,6 @@ public class RNForegroundServiceModule extends ReactContextBaseJavaModule {
     }
 
     private boolean isServiceRunning() {
-        ActivityManager manager = (ActivityManager) reactContext.getSystemService(Context.ACTIVITY_SERVICE);
-        for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
-            if (ForegroundService.class.getName().equals(service.service.getClassName())) {
-                return true;
-            }
-        }
-        return false;
+        return ForegroundService.isRunning;
     }
 }

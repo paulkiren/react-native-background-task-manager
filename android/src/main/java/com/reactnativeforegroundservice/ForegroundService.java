@@ -8,13 +8,20 @@ import android.app.Service;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.IBinder;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 
-public class ForegroundService extends Service {
+import com.facebook.react.HeadlessJsTaskService;
+import com.facebook.react.bridge.Arguments;
+import com.facebook.react.jstasks.HeadlessJsTaskConfig;
+
+public class ForegroundService extends HeadlessJsTaskService {
     private static final String CHANNEL_ID = "ForegroundServiceChannel";
+    public static final String ACTION_BUTTON_PRESSED = "com.reactnativeforegroundservice.ACTION_BUTTON_PRESSED";
     private static final int NOTIFICATION_ID = 1;
+    public static boolean isRunning = false;
     
     private NotificationManager notificationManager;
     private String taskName = "Task";
@@ -26,6 +33,12 @@ public class ForegroundService extends Service {
     private boolean button = false;
     private String buttonText = "Stop";
     private String buttonOnPress = "stop";
+    private boolean button2 = false;
+    private String button2Text = "Stop";
+    private String button2OnPress = "stop";
+    private boolean button3 = false;
+    private String button3Text = "Stop";
+    private String button3OnPress = "stop";
     private boolean setOnlyAlertOnce = false;
     private String color = "#000000";
     private int progressMax = 100;
@@ -37,6 +50,7 @@ public class ForegroundService extends Service {
         super.onCreate();
         notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         createNotificationChannel();
+        isRunning = true;
     }
 
     @Override
@@ -50,11 +64,15 @@ public class ForegroundService extends Service {
                 return START_STICKY;
             }
             
-            // Extract parameters from intent
+            // Extract parameters from intent for notification
             extractParametersFromIntent(intent);
         }
 
         startForeground(NOTIFICATION_ID, createNotification());
+
+        // Start the headless task
+        super.onStartCommand(intent, flags, startId);
+
         return START_STICKY;
     }
 
@@ -86,6 +104,24 @@ public class ForegroundService extends Service {
         if (intent.hasExtra("buttonOnPress")) {
             buttonOnPress = intent.getStringExtra("buttonOnPress");
         }
+        if (intent.hasExtra("button2")) {
+            button2 = intent.getBooleanExtra("button2", false);
+        }
+        if (intent.hasExtra("button2Text")) {
+            button2Text = intent.getStringExtra("button2Text");
+        }
+        if (intent.hasExtra("button2OnPress")) {
+            button2OnPress = intent.getStringExtra("button2OnPress");
+        }
+        if (intent.hasExtra("button3")) {
+            button3 = intent.getBooleanExtra("button3", false);
+        }
+        if (intent.hasExtra("button3Text")) {
+            button3Text = intent.getStringExtra("button3Text");
+        }
+        if (intent.hasExtra("button3OnPress")) {
+            button3OnPress = intent.getStringExtra("button3OnPress");
+        }
         if (intent.hasExtra("setOnlyAlertOnce")) {
             setOnlyAlertOnce = intent.getBooleanExtra("setOnlyAlertOnce", false);
         }
@@ -100,6 +136,12 @@ public class ForegroundService extends Service {
         }
         if (intent.hasExtra("progressIndeterminate")) {
             progressIndeterminate = intent.getBooleanExtra("progressIndeterminate", false);
+        }
+        if (intent.hasExtra("color")) {
+            color = intent.getStringExtra("color");
+        }
+        if (intent.hasExtra("number")) {
+            number = intent.getIntExtra("number", 0);
         }
     }
 
@@ -192,20 +234,44 @@ public class ForegroundService extends Service {
             builder.setProgress(progressMax, progressCurr, progressIndeterminate);
         }
 
-        // Add action button if specified
+        // Add action buttons if specified
         if (button) {
-            Intent stopIntent = new Intent(this, ForegroundService.class);
-            stopIntent.setAction("STOP_SERVICE");
-            PendingIntent stopPendingIntent = PendingIntent.getService(
-                this, 
-                0, 
-                stopIntent, 
-                PendingIntent.FLAG_UPDATE_CURRENT | (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ? PendingIntent.FLAG_IMMUTABLE : 0)
-            );
-            builder.addAction(android.R.drawable.ic_menu_close_clear_cancel, buttonText, stopPendingIntent);
+            builder.addAction(android.R.drawable.ic_menu_close_clear_cancel, buttonText, createButtonIntent(buttonOnPress, 1));
+        }
+        if (button2) {
+            builder.addAction(android.R.drawable.ic_menu_close_clear_cancel, button2Text, createButtonIntent(button2OnPress, 2));
+        }
+        if (button3) {
+            builder.addAction(android.R.drawable.ic_menu_close_clear_cancel, button3Text, createButtonIntent(button3OnPress, 3));
         }
 
         return builder.build();
+    }
+
+    private PendingIntent createButtonIntent(String actionId, int requestCode) {
+        Intent intent = new Intent(ACTION_BUTTON_PRESSED);
+        intent.putExtra("actionId", actionId);
+        return PendingIntent.getBroadcast(
+            this,
+            requestCode,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT | (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ? PendingIntent.FLAG_IMMUTABLE : 0)
+        );
+    }
+
+    @Nullable
+    @Override
+    protected HeadlessJsTaskConfig getTaskConfig(Intent intent) {
+        Bundle extras = intent.getExtras();
+        if (extras != null) {
+            return new HeadlessJsTaskConfig(
+                extras.getString("taskName"),
+                Arguments.fromBundle(extras),
+                extras.getInt("timeoutMs", 0),
+                true // It's a foreground service
+            );
+        }
+        return null;
     }
 
     @Nullable
@@ -218,5 +284,6 @@ public class ForegroundService extends Service {
     public void onDestroy() {
         super.onDestroy();
         stopForeground(true);
+        isRunning = false;
     }
 }
